@@ -8,11 +8,30 @@ const initalState = {
 }
 
 //REDUCER GOES HERE
-
+const reducer = (state = initalState, action) => {
+  switch (action.type) {
+    case 'NEXT_LYRIC':
+      let newArrayPosition = state.arrayPosition + 1;
+      let newState = {
+        songLyricsArray: state.songLyricsArray,
+        arrayPosition: newArrayPosition,
+      }
+      return newState;
+    default:
+      return state;
+  }
+}
 
 
 // JEST TESTS AND SETUP GOES HERE
+const { expect } = window;
 
+expect(reducer(initialState, { type: null })).toEqual(initialState);
+
+expect(reducer(initialState, { type: 'NEXT_LYRIC' })).toEqual({
+  songLyricsArray: songLyricsArray,
+  arrayPosition: 1
+});
 
 
 //REDUX STORE
