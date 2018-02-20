@@ -39,6 +39,28 @@ const { createStore } = Redux;
 const store = createStore =(reducer);
 console.log(store.getState());
 
+//RENDERING STATE IN DOM
+const renderLyrics = () => {
+  //Defines a lyricsDisplay constant that refers to the div with a 'lyrics' ID
+  const lyricsDisplay = document.getElementById('lyrics');
+  //If there are lyrics in the div, remove them all one by one until it's empty
+  while (lyricsDisplay.firstChild) {
+    lyricsDisplay.removeChild(lyricsDisplay.firstChild);
+  }
+  //Locates song lyrics at the current arrayPosition
+  const currentLine = store.getState().songLyricsArray[store.getState().arrayPosition];
+  //Creates DOM text node containing the song lyric identified in the line above
+  const renderedLine = document.createTextNode(currentLine);
+  //Adds text node create in line above to 'lyrics' div in DOM
+  document.getElementById('lyrics').appendChild(renderedLine);
+}
+
+//runs renderLyrics method
+//HTML5 version of $(document).ready()
+window.onLoad = function() {
+  renderLyrics();
+}
+
 // CLICK LISTENER
 const userClick = () => {
   console.log('click');
