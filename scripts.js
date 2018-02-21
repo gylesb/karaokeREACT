@@ -46,56 +46,45 @@ const initialState = {
 
 //REDUCERs
 const lyricChangeReducer = (state = initialState.songsById, action) => {
-  //Declares several variables
   let newArrayPosition;
   let newSongsByIdEntry;
   let newSongsByIdStateSlice;
-
   switch (action.type) {
     case 'NEXT_LYRIC':
-    //Locates the arrayPosition of the song whose ID was provided
-    //In action's payload, and increments it by one:
-    console.log(action.currentSongId);
-    newArrayPosition = state[action.currentSongId].arrayPosition + 1;
-    //Creates a copy of a song's entry in the songsById
-    //Adds updated newArrayPosition value we just calculated as its ArrayPosition
-    newSongsByIdEntry = Object.assign({}, state[action.currentSongId], {
-      arrayPosition: newArrayPosition
-    })
-    //Creates copy of entire songsById state slice
-    //Adds updated newSongsById state entry to a new copy:
-    newSongsByIdStateSlice = Object.assign({}, state, {
-      [action.currentSongId]: newSongsByIdEntry
-    });
-    //Returns entire newSongsByIdSlice that was constructed
-      return newSongsByIdStateSlice;
-
-    case 'RESTART_SONG':
-    //Creates copy of the song entry in songsId state slice whose ID matches the current song ID. Includes with the action
+      newArrayPosition = state[action.currentSongId].arrayPosition + 1;
       newSongsByIdEntry = Object.assign({}, state[action.currentSongId], {
-        arrayPosition: 0
+        arrayPosition: newArrayPosition
       })
-      // Creates a copy of the entire songsById state slice, and adds the
-      // updated newSongsByIdEntry we just created to this copy:
       newSongsByIdStateSlice = Object.assign({}, state, {
         [action.currentSongId]: newSongsByIdEntry
       });
-      //Returns entires newSongs By updating ID state state slice in Redux store to match the new slice returned
       return newSongsByIdStateSlice;
-      // If action is neither NEXT_LYRIC or RESTART_SONG type, return existing state.
+    case 'RESTART_SONG':
+      newSongsByIdEntry = Object.assign({}, state[action.currentSongId], {
+        arrayPosition: 0
+      })
+      newSongsByIdStateSlice = Object.assign({}, state, {
+        [action.currentSongId]: newSongsByIdEntry
+      });
+      return newSongsByIdStateSlice;
     default:
       return state;
   }
 }
 
 const songChangeReducer = (state = initialState.currentSongId, action) => {
-  switch (action.type) {
+  switch (action.type){
     case 'CHANGE_SONG':
       return action.newSelectedSongId
     default:
       return state;
   }
 }
+
+const rootReducer = this.Redux.combineReducers({
+  currentSongId: songChangeReducer,
+  songsById: lyricChangeReducer
+});
 
 // JEST TESTS AND SETUP GOES HERE
 const { expect } = window;
@@ -170,41 +159,78 @@ expect(songChangeReducer(initialState, { type: null})).toEqual(initialState);
 
 expect(songChangeReducer(initialState, { type: 'CHANGE_SONG', newSelectedSongId: 1 })).toEqual(1);
 
-//REDUX STORE
-const { createStore } = Redux;
-const store = createStore(lyricChangeReducer);
 
-// //RENDERING STATE IN DOM
-// const renderLyrics = () => {
-//   //Defines a lyricsDisplay constant that refers to the div with a 'lyrics' ID
-//   const lyricsDisplay = document.getElementById('lyrics');
-//   //If there are lyrics in the div, remove them all one by one until it's empty
-//   while (lyricsDisplay.firstChild) {
-//     lyricsDisplay.removeChild(lyricsDisplay.firstChild);
-//   }
-//   //Locates song lyrics at the current arrayPosition
-//   const currentLine = store.getState().songLyricsArray[store.getState().arrayPosition];
-//   //Creates DOM text node containing the song lyric identified in the line above
-//   const renderedLine = document.createTextNode(currentLine);
-//   //Adds text node create in line above to 'lyrics' div in DOM
-//   document.getElementById('lyrics').appendChild(renderedLine);
-// }
-//
-// //runs renderLyrics method
-// //HTML5 version of $(document).ready()
-// window.onLoad = function() {
-//   renderLyrics();
-// }
+// REDUX STORE
+const { createStore } = Redux;
+const store = createStore(rootReducer);
+
+//RENDERING STATE IN DOM
+
+const renderLyrics = () => {
+  const lyricsDisplay = document.getElementById('lyrics');
+  while (lyricsDisplay.firstChild) {
+    lyricsDisplay.removeChild(lyricsDisplay.firstChild);
+  }
+
+  if (store.getState().currentSongId) {
+    const currentLine = document.createTextNode(store.getState().songsById[store.getState().currentSongId].songArray[store.getState().songsById[store.getState().currentSongId].arrayPosition]);
+    document.getElementById('lyrics').appendChild(currentLine);
+  } else {
+    const selectSongMessage = document.createTextNode("Select a song from the menu above to sing along!");
+    document.getElementById('lyrics').appendChild(selectSongMessage);
+  }
+}
+
+const renderSongs = () => {
+  const songsById = store.getState().songsById;
+  for (const songKey in songsById) {
+    const song = songsById[songKey]
+    const li = document.createElement('li');
+    const h3 = document.createElement('h3');
+    const em = document.createElement('em');
+    const songTitle = document.createTextNode(song.title);
+    const songArtist = document.createTextNode(' by ' + song.artist);
+    em.appendChild(songTitle);
+    h3.appendChild(em);
+    h3.appendChild(songArtist);
+    h3.addEventListener('click', function() {
+      selectSong(song.songId);
+    });
+    li.appendChild(h3);
+    document.getElementById('songs').appendChild(li);
+  }
+}
+
+window.onload = function() {
+  renderSongs();
+  renderLyrics();
+}
 
 // CLICK LISTENER
 const userClick = () => {
-  const currentState = store.getState();
-
-  if (currentState.arrayPosition === currentState.songLyricsArray.length - 1) {
-    store.dispatch({ type: 'RESTART_SONG' } );
+  if (store.getState().songsById.arrayPosition === store.getState().songsById[store.getState().currentSongId].length - 1) {
+    store.dispatch({ type: 'RESTART_SONG',
+                     currentSongId: store.getState().currentSongId });
   } else {
-    store.dispatch({ type: 'NEXT_LYRIC'} );
+    store.dispatch({ type: 'NEXT_LYRIC',
+                     currentSongId: store.getState().currentSongId });
   }
+}
+
+const selectSong = (newSongId) => {
+  let action;
+  if (store.getState().currentSongId) {
+    action = {
+      type: 'RESTART_SONG',
+      currentSongId: store.getState().currentSongId
+    }
+    store.dispatch(action);
+  }
+  action = {
+    type: 'CHANGE_SONG',
+    newSelectedSongId: newSongId
+  }
+  store.dispatch(action);
 }
 
 //SUBSCRIBE TO REDUX STORE
