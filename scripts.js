@@ -208,10 +208,14 @@ window.onload = function() {
 
 // CLICK LISTENER
 const userClick = () => {
-  if (store.getState().songsById.arrayPosition === store.getState().songsById[store.getState().currentSongId].length - 1) {
+  console.log(store.getState().songsById[store.getState().currentSongId].arrayPosition);
+  console.log(store.getState().songsById[store.getState().currentSongId].songArray.length - 1);
+  if (store.getState().songsById[store.getState().currentSongId].arrayPosition === store.getState().songsById[store.getState().currentSongId].songArray.length - 1) {
+    console.log('End of song');
     store.dispatch({ type: 'RESTART_SONG',
                      currentSongId: store.getState().currentSongId });
   } else {
+    console.log('Same song');
     store.dispatch({ type: 'NEXT_LYRIC',
                      currentSongId: store.getState().currentSongId });
   }
